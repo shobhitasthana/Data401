@@ -184,13 +184,13 @@ class LDA():
         
     def predict(self,x):
         preds = []
-        if self.vector == None:
+        if self.vector is None:
             print(f'Unable to make predictions until the model is fit. Please use fit() first.') 
             return
         else:
             for x_i in x:
                 proj = np.dot(self.vector,x_i)
-                if abs(proj - self.mu_1) < abs(proj - self.mu_2):
+                if abs(proj - np.dot(self.vector, self.mu_1)) < abs(proj - np.dot(self.vector, self.mu_2)):
                     preds.append(1)
                 else:
                     preds.append(-1)
