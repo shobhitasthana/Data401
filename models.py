@@ -86,7 +86,7 @@ class LogisticRegression():
                 betas[beta_index] = betas[beta_index] + (rate * (y - p) * X[beta_index]) 
             return betas
 
-        def _fit(X, y, betas,verbose, rate = .1,epsilon = .001):
+        def _fit(X, y, betas,verbose, rate = .1,epsilon = .0001):
 
             # Will be used as stopping condition
             total_weight_diff = np.inf
@@ -107,6 +107,8 @@ class LogisticRegression():
                 betas = update_via_gradient(rate, p, y[row_index], betas,pt)
                     
                 total_weight_diff = sum(abs(betas - old_betas))
+                
+                count += 1
                 
             return betas
         
