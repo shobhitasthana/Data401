@@ -24,8 +24,7 @@ lda = models.LDA()
 lda.fit(iris,svm_classes)
 
 
-reg = models.LogisticRegression()
+svm = models.SVM()
 
-#reg.fit(iris,bclasses)
-
-#print(reg.predict(iris))
+svm.fit(iris,svm_classes)
+print(svm.predict(iris))

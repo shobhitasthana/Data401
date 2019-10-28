@@ -214,3 +214,47 @@ class LDA():
                     preds.append(-1)
         return preds
 
+class SVM():
+    def __init__(self):
+        #SVM objects
+        self.w = None
+    
+    def fit(self,train,labels, c=1, epoch=10000, rate=.001):
+        """
+           This method actually builds the model.
+
+           :parameter train - Pandas DataFrame containing explanatory variables
+           :parameter labels - Pandas DataFrame containing response variables
+           :parameter c - Hyparameter to influence support vectors
+            Default is 1.
+           :parameter epoch - Number of iterations for stochastic gradient descent
+            Default is 10000
+           :parameter rate - learning rate for gradient descent
+            Default is .001
+           """
+        self.w = np.zeros(len(train[0]))
+        lam = -2*c/epoch
+        for i in range(epoch):
+            for i, x in enumerate(train):
+                val = np.dot(x, self.w)
+                if (labels[i]*val < 1):
+                    self.w += rate*((labels[i]*x) + lam*self.w)
+                else:
+                    self.w += rate*(lam*self.w)
+        
+        return
+        
+    def predict(self,data):
+        """
+        Makes predictions based on fit data. This means that fit() must be called before predict()
+
+        :parameter data - Pandas DataFrame of data you want to make predictions about.
+        """
+        if self.w is None:
+            print(f'Unable to make predictions until the model is fit. Please use fit() first.') 
+            return
+        predictions = []
+        for x in data:
+            projection = np.dot(x, self.w)
+            predictions.append(projection)
+        return np.sign(predictions)
