@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-class LogisticRegression():
+class LogReg():
     def __init__(self):
         # Model Definition
         self.slopes = None
@@ -16,6 +16,7 @@ class LogisticRegression():
         self.max_iters = None
         self.max_iters_no_change = None
         self.verbose = None
+        self.lam = .5
 
         # Extra metrics
         self.errors = []
@@ -47,9 +48,6 @@ class LogisticRegression():
             return
     def _fit_by_sgd(self,X, y,**kwargs):
         """
-        Calculates the gradient of the loss function for linear regression.
-        ∇L(x) = -2X^T(y - Xβ)
-
         :param x: Column vector of explanatory variables
         :param y: Column vector of dependent variables
         :param learning_rate: Rate that the gradient descent learns at
@@ -61,54 +59,61 @@ class LogisticRegression():
         """
         assert len(X) == len(y)
         
-        # Instantiate 1, 0,...,0 as betas where the one is the intercept
-#         betas = np.concatenate(np.array([1,]), np.zeros(X.shape[1]))
+        # Instantiate random betas
         betas = np.random.rand(X.shape[1]+1)
         
         # Insert a 1 at beginning of each row for x's to represent intercept
         X.insert(0, '__intercept__', 1)
         X = X.to_numpy()
         y = y.to_numpy()
+        
+        # Normalize X
+        mins = np.min(X, axis = 0) 
+        maxs = np.max(X, axis = 0) 
+        rng = maxs - mins 
+        X = 1 - ((maxs - X)/(rng + .000001))
     
         def apply_beta(betas, data_row):
-            # multiply betas by xs
-            beta_by_xs = np.dot(betas, data_row)
 
-            return 1 / (1 + np.e**(-1 *beta_by_xs))
+            return 1 / (1 + np.e**(-1 * np.dot(betas, data_row)))
 
         # Update Betas
         def update_via_gradient(rate, p, y, betas, X):
+            
             # update betas one at a time
             for beta_index in range(len(betas)):
-#                 print("rate ",rate)
-#                 print("y",y)
-#                 print("p",p)
-                betas[beta_index] = betas[beta_index] + (rate * (y - p) * X[beta_index]) 
+                betas[beta_index] = betas[beta_index] + (rate * ((y - p) * X[beta_index]) - (rate*(self.lam * betas[beta_index]))) 
             return betas
+        
+        # Calculate loss for ridge regression
+        def calc_loss(y, p, betas):
+            return (-y * np.log(p + .000001))  - ((1 - y) *np.log(1-p + .0000001)) + (sum(betas) * self.lam)
 
-        def _fit(X, y, betas,verbose, rate = .1,epsilon = .0001):
+        def _fit(X, y, betas,verbose, rate = .01,epsilon = .01):
 
             # Will be used as stopping condition
-            total_weight_diff = np.inf
-            count = 0
+            prior_loss = np.inf
+            curr_loss = 0
+            max_epochs = 50
+            epoch_count = 0
             
-            # Stop looping when regression coeffecients fails to change by a total magnitude greater than epsilon
-            while total_weight_diff > epsilon:
-                
-                row_index = count % X.shape[0]
-                pt = X[row_index,:]
-                
-                # Transform pt by applying betas
-                p = apply_beta(betas, pt)
+            # Stop looping when epoch loss fails to change by a total magnitude greater than epsilon
+            while abs(prior_loss - curr_loss) > epsilon and epoch_count <= max_epochs:
+                prior_loss = curr_loss
+                curr_loss = 0
+                for row_index in range(X.shape[0]):
+                    pt = X[row_index,:]
 
-                # Save a copy for comparison's sake
-                old_betas = betas.copy()
-                # Update betas
-                betas = update_via_gradient(rate, p, y[row_index], betas,pt)
+                    # Transform pt by applying betas
+                    p = apply_beta(betas, pt)
                     
-                total_weight_diff = sum(abs(betas - old_betas))
-                
-                count += 1
+                    curr_loss += calc_loss(y[row_index], p, betas)
+
+                    # Update betas
+                    betas = update_via_gradient(rate, p, y[row_index], betas,pt)
+                epoch_count += 1
+                                    
+
                 
             return betas
         
