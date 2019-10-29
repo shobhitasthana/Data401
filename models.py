@@ -17,6 +17,12 @@ class LogReg():
         self.max_iters_no_change = None
         self.verbose = None
         self.lam = .5
+        
+        self.accuracy = None
+        self.precision = None
+        self.recall = None
+        self.f1 = None
+    
 
         # Extra metrics
         self.errors = []
@@ -143,6 +149,44 @@ class LogReg():
             # Return Probability if deterministic == False
             else:
                 return [1 / (1 + np.e**(-1 *beta_by_x)) for beta_by_x in beta_by_xs]
+            
+    def calc_accuracy(self, preds, true):
+        self.accuracy = sum(preds == true) / true.shape[0]
+        return self.accuracy
+    
+    def calc_precision(self, preds, true):
+        true_positives = ((preds == 1) & (true == 1)).sum()
+        self.precision = true_positives / (preds == 1).sum()
+        return self.precision
+    
+    def calc_recall(self, preds, true):
+        true_positives = ((preds == 1) & (true == 1)).sum()
+        self.recall = true_positives / (true == 1).sum()
+        return self.precision
+    
+    def calc_f1(self, preds, true):
+        if self.precision == None:
+            self.precision = self.calc_precision(preds, true)
+        if self.recall == None:
+            self.recall = self.calc_recall(preds, true)
+        self.f1 = 2*(self.precision*self.recall) / (self.precision + self.recall)
+        return self.f1
+        
+    
+    def score(self, preds, true, metrics=['accuracy','precision','recall','f1']):
+        scores = {}
+        for metric in metrics:
+            if metric == 'accuracy':
+                scores['accuracy'] = self.calc_accuracy(preds, true)
+            elif metric == 'precision':
+                scores['precision'] = self.calc_precision(preds, true)
+            elif metric == 'recall':
+                scores['recall'] = self.calc_recall(preds, true)
+            elif metric == 'f1':
+                scores['f1'] = self.calc_f1(preds, true)
+            else:
+                raise ValueError(f"Given metric of %s must be one of 'accuracy','precision','recall','f1'" % metric)
+        return scores
               
 
 class LDA():
@@ -153,6 +197,11 @@ class LDA():
         self.mu_2 = None
         self.S = None
         self.B = None
+        self.accuracy = None
+        self.precision = None
+        self.recall = None
+        self.f1 = None
+    
         
     def get_stats(self,data, y):
         n_1 = 0
@@ -213,13 +262,55 @@ class LDA():
                 else:
                     preds.append(-1)
         return preds
+    
+    def calc_accuracy(self, preds, true):
+        self.accuracy = sum(preds == true) / true.shape[0]
+        return self.accuracy
+    
+    def calc_precision(self, preds, true):
+        true_positives = ((preds == 1) & (true == 1)).sum()
+        self.precision = true_positives / (preds == 1).sum()
+        return self.precision
+    
+    def calc_recall(self, preds, true):
+        true_positives = ((preds == 1) & (true == 1)).sum()
+        self.recall = true_positives / (true == 1).sum()
+        return self.precision
+    
+    def calc_f1(self, preds, true):
+        if self.precision == None:
+            self.precision = self.calc_precision(preds, true)
+        if self.recall == None:
+            self.recall = self.calc_recall(preds, true)
+        self.f1 = 2*(self.precision*self.recall) / (self.precision + self.recall)
+        return self.f1
+        
+    
+    def score(self, preds, true, metrics=['accuracy','precision','recall','f1']):
+        scores = {}
+        for metric in metrics:
+            if metric == 'accuracy':
+                scores['accuracy'] = self.calc_accuracy(preds, true)
+            elif metric == 'precision':
+                scores['precision'] = self.calc_precision(preds, true)
+            elif metric == 'recall':
+                scores['recall'] = self.calc_recall(preds, true)
+            elif metric == 'f1':
+                scores['f1'] = self.calc_f1(preds, true)
+            else:
+                raise ValueError(f"Given metric of %s must be one of 'accuracy','precision','recall','f1'" % metric)
+        return scores
 
 class SVM():
     def __init__(self):
         #SVM objects
         self.w = None
+        self.accuracy = None
+        self.precision = None
+        self.recall = None
+        self.f1 = None
     
-    def fit(self,train,labels, c=1, epoch=10000, rate=.001):
+    def fit(self,train,labels, c=1, epoch=1000, rate=.01):
         """
            This method actually builds the model.
 
@@ -232,16 +323,16 @@ class SVM():
            :parameter rate - learning rate for gradient descent
             Default is .001
            """
-        self.w = np.zeros(len(train[0]))
+        self.w = np.zeros(train.shape[1])
         lam = -2*c/epoch
         for i in range(epoch):
+            w_o = self.w
             for i, x in enumerate(train):
                 val = np.dot(x, self.w)
                 if (labels[i]*val < 1):
                     self.w += rate*((labels[i]*x) + lam*self.w)
                 else:
                     self.w += rate*(lam*self.w)
-        
         return
         
     def predict(self,data):
@@ -258,3 +349,41 @@ class SVM():
             projection = np.dot(x, self.w)
             predictions.append(projection)
         return np.sign(predictions)
+    
+    def calc_accuracy(self, preds, true):
+        self.accuracy = sum(preds == true) / true.shape[0]
+        return self.accuracy
+    
+    def calc_precision(self, preds, true):
+        true_positives = ((preds == 1) & (true == 1)).sum()
+        self.precision = true_positives / (preds == 1).sum()
+        return self.precision
+    
+    def calc_recall(self, preds, true):
+        true_positives = ((preds == 1) & (true == 1)).sum()
+        self.recall = true_positives / (true == 1).sum()
+        return self.precision
+    
+    def calc_f1(self, preds, true):
+        if self.precision == None:
+            self.precision = self.calc_precision(preds, true)
+        if self.recall == None:
+            self.recall = self.calc_recall(preds, true)
+        self.f1 = 2*(self.precision*self.recall) / (self.precision + self.recall)
+        return self.f1
+        
+    
+    def score(self, preds, true, metrics=['accuracy','precision','recall','f1']):
+        scores = {}
+        for metric in metrics:
+            if metric == 'accuracy':
+                scores['accuracy'] = self.calc_accuracy(preds, true)
+            elif metric == 'precision':
+                scores['precision'] = self.calc_precision(preds, true)
+            elif metric == 'recall':
+                scores['recall'] = self.calc_recall(preds, true)
+            elif metric == 'f1':
+                scores['f1'] = self.calc_f1(preds, true)
+            else:
+                raise ValueError(f"Given metric of %s must be one of 'accuracy','precision','recall','f1'" % metric)
+        return scores
