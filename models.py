@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+import scipy
 
 class LogReg():
     def __init__(self):
@@ -243,7 +243,30 @@ class LDA():
         self.S = S_1 + S_2
         print('S calculated')
         return
-    
+
+    def get_B_2(self,data, y):
+        self.get_stats(data, y)
+
+        self.B = scipy.linalg.dot((self.mu_1 - self.mu_2).reshape(-1, 1), (self.mu_1 - self.mu_2).reshape(1, -1))
+        print('B calculated')
+        return
+
+    def get_S_2(self,data, y):
+        self.get_stats(data, y)
+
+        S_1 = np.zeros((data.shape[1], data.shape[1]))
+        S_2 = np.zeros((data.shape[1], data.shape[1]))
+
+        for (x_i, y_i) in zip(data, y):
+            if y_i == 1:
+                S_1 += scipy.linalg.dot((x_i - self.mu_2).reshape(-1, 1), (x_i - self.mu_2).reshape(1, -1))
+            else:
+                S_2 += scipy.linalg.dot((x_i - self.mu_2).reshape(-1, 1), (x_i - self.mu_2).reshape(1, -1))
+
+        self.S = S_1 + S_2
+        print('S calculated')
+        return
+
     def fit(self,data,y):
         self.get_stats(data,y)
         self.get_B(data,y)
@@ -251,7 +274,14 @@ class LDA():
         eig_values, eig_vectors = np.linalg.eig(np.matmul(np.linalg.inv(self.S), self.B))
         print('eigs calculated')
         self.vector = np.real(eig_vectors[eig_values.argmax()])
-        
+    def fit_scipy(self,data,y):
+        self.get_stats(data,y)
+        self.get_B_2(data,y)
+        self.get_S_2(data,y)
+        eig_values, eig_vectors = scipy.linalg.eig(scipy.linalg.dot(scipy.linalg.inv(self.S), self.B))
+        print('eigs calculated')
+        self.vector = np.real(eig_vectors[eig_values.argmax()])    
+
     def predict(self,x):
         preds = []
         if self.vector is None:
