@@ -304,13 +304,14 @@ class LDA():
 class SVM():
     def __init__(self):
         #SVM objects
+        self.rate = None
         self.w = None
         self.accuracy = None
         self.precision = None
         self.recall = None
         self.f1 = None
     
-    def fit(self,train,labels, c=1, epoch=1000, rate=.01):
+    def fit(self,train,labels, c=1, epoch=30, rate=.01):
         """
            This method actually builds the model.
 
@@ -321,18 +322,19 @@ class SVM():
            :parameter epoch - Number of iterations for stochastic gradient descent
             Default is 10000
            :parameter rate - learning rate for gradient descent
-            Default is .001
+            Default is .01
            """
+        self.rate = rate
         self.w = np.zeros(train.shape[1])
         lam = -2*c/epoch
         for i in range(epoch):
             w_o = self.w
             for i, x in enumerate(train):
-                val = np.dot(x, self.w)
+                val = x.dot(self.w)
                 if (labels[i]*val < 1):
-                    self.w += rate*((labels[i]*x) + lam*self.w)
+                    self.w = self.w + rate*((labels[i]*x) + lam*self.w)
                 else:
-                    self.w += rate*(lam*self.w)
+                    self.w = self.w + rate*(lam*self.w)
         return
         
     def predict(self,data):
@@ -362,7 +364,7 @@ class SVM():
     def calc_recall(self, preds, true):
         true_positives = ((preds == 1) & (true == 1)).sum()
         self.recall = true_positives / (true == 1).sum()
-        return self.precision
+        return self.recall
     
     def calc_f1(self, preds, true):
         if self.precision == None:

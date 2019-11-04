@@ -26,5 +26,5 @@ lda.fit(iris,svm_classes)
 
 svm = models.SVM()
 
-svm.fit(iris,svm_classes)
+svm.fit(iris,svm_classes, c=.5, epoch=1000)
 print(svm.predict(iris))
