@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+import scipy
 
 class LogReg():
     def __init__(self):
@@ -226,6 +226,7 @@ class LDA():
         self.get_stats(data, y)
 
         self.B = np.matmul((self.mu_1 - self.mu_2).reshape(-1, 1), (self.mu_1 - self.mu_2).reshape(1, -1))
+        print('B calculated')
         return
     def get_S(self,data, y):
         self.get_stats(data, y)
@@ -240,15 +241,19 @@ class LDA():
                 S_2 += np.matmul((x_i - self.mu_2).reshape(-1, 1), (x_i - self.mu_2).reshape(1, -1))
 
         self.S = S_1 + S_2
+        print('S calculated')
         return
-    
+ 
+
     def fit(self,data,y):
         self.get_stats(data,y)
         self.get_B(data,y)
         self.get_S(data,y)
         eig_values, eig_vectors = np.linalg.eig(np.matmul(np.linalg.inv(self.S), self.B))
+        print('eigs calculated')
         self.vector = np.real(eig_vectors[eig_values.argmax()])
-        
+
+
     def predict(self,x):
         preds = []
         if self.vector is None:
